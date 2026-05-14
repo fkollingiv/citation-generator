@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shared Resource Citation Generator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: transparent;
+    color: #222;
+    padding: 24px 16px;
+  }
+  /* ── Scoped resets: override anything the WordPress theme injects ── */
+  .widget, .widget * {
+    box-sizing: border-box !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    line-height: 1.5 !important;
+    -webkit-font-smoothing: antialiased;
+  }
+  .widget a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+  .widget ul, .widget ol {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .widget li {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: none !important;
+  }
+  .widget li::before, .widget li::after {
+    display: none !important;
+    content: none !important;
+  }
+  .widget h1, .widget h2, .widget h3, .widget h4 {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: none !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+  }
+  .widget label {
+    display: flex !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-weight: normal !important;
+    float: none !important;
+    width: auto !important;
+  }
+  .widget input[type="checkbox"] {
+    width: 15px !important;
+    height: 15px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid #aaa !important;
+    border-radius: 2px !important;
+    appearance: auto !important;
+    -webkit-appearance: checkbox !important;
+    float: none !important;
+    flex-shrink: 0 !important;
+  }
+  .widget button {
+    font-family: inherit !important;
+    line-height: 1.4 !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+    border-radius: 6px !important;
+  }
+  .widget p {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  /* ── End scoped resets ── */
+  .widget {
+    max-width: 780px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+  .widget-header {
+    background: #00693E;
+    color: white;
+    padding: 26px 30px;
+  }
+  .widget-header h1 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: white !important;
+  }
+  .widget-header p {
+    font-size: 0.88rem;
+    opacity: 0.88;
+    line-height: 1.5;
+  }
+  .widget-body {
+    padding: 26px 30px;
+  }
+  .universal-note {
+    background: #f0f7f4;
+    border-left: 4px solid #00693E;
+    padding: 12px 16px;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 26px;
+    font-size: 0.88rem;
+    color: #333;
+    line-height: 1.5;
+  }
+  .universal-note strong {
+    color: #00693E;
+  }
+  .category {
+    margin-bottom: 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .category-header {
+    background: #f8f8f8;
+    padding: 11px 16px;
+    border-bottom: 1px solid #e0e0e0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+  }
+  .category-header:hover {
+    background: #f0f0f0;
+  }
+  .category-header-text h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #00693E;
+  }
+  .category-header-text .director {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 2px;
+  }
+  .chevron {
+    font-size: 0.75rem;
+    color: #999;
+    transition: transform 0.2s;
+  }
+  .chevron.open {
+    transform: rotate(180deg);
+  }
+  .category-items {
+    padding: 6px 0;
+  }
+  .item {
+    display: flex;
+    align-items: flex-start;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .item:hover {
+    background: #f8f8f8;
+  }
+  .item.child-item {
+    padding-left: 44px;
+  }
+  .item input[type="checkbox"] {
+    margin-right: 12px;
+    margin-top: 3px;
+    width: 15px;
+    height: 15px;
+    accent-color: #00693E;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .item-label {
+    flex: 1;
+    cursor: pointer;
+  }
+  .item-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #222;
+    line-height: 1.4;
+  }
+  .item-grants {
+    font-size: 0.78rem;
+    color: #777;
+    margin-top: 3px;
+    font-family: 'Courier New', monospace;
+  }
+  .item-note {
+    font-size: 0.8rem;
+    color: #7a5c00;
+    background: #fffbea;
+    border-radius: 4px;
+    padding: 6px 10px;
+    margin: 2px 16px 8px 43px;
+    border: 1px solid #f0e08a;
+    line-height: 1.4;
+  }
+  /* Output section */
+  .output-section {
+    margin-top: 30px;
+    border-top: 2px solid #e0e0e0;
+    padding-top: 22px;
+  }
+  .output-section h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #00693E;
+    margin-bottom: 14px;
+  }
+  .output-empty {
+    color: #aaa;
+    font-size: 0.88rem;
+    font-style: italic;
+    text-align: center;
+    padding: 22px 0;
+    border: 1px dashed #ddd;
+    border-radius: 6px;
+  }
+  .citation-list {
+    list-style: none;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .citation-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.9rem;
+  }
+  .citation-list li:last-child {
+    border-bottom: none;
+  }
+  .citation-list li:nth-child(even) {
+    background: #fafafa;
+  }
+  .citation-badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 12px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  .badge-grant {
+    background: #e8f4ee;
+    color: #00693E;
+    border: 1px solid #b8ddc9;
+  }
+  .badge-rrid {
+    background: #e8eef8;
+    color: #2c5aa0;
+    border: 1px solid #b8ccec;
+  }
+  .citation-value {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: #222;
+    font-weight: 600;
+  }
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .copy-btn {
+    background: #00693E;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .copy-btn:hover:not(:disabled) {
+    background: #005530;
+  }
+  .copy-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+  .copy-btn.copied {
+    background: #2c7a4b;
+  }
+  .reset-btn {
+    background: white;
+    color: #666;
+    border: 1px solid #ccc;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .reset-btn:hover {
+    background: #f5f5f5;
+    border-color: #aaa;
+  }
+  .claude-btn {
+    background: #00693E;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .claude-btn:hover:not(:disabled) {
+    background: #005530;
+  }
+  .claude-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+  .author-note {
+    margin-top: 14px;
+    background: #fffbea;
+    border: 1px solid #f0e08a;
+    border-left: 4px solid #e0a000;
+    border-radius: 0 6px 6px 0;
+    padding: 12px 14px;
+    font-size: 0.85rem;
+    color: #7a5c00;
+    line-height: 1.5;
+  }
+  .author-note strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.88rem;
+  }
+</style>
+</head>
+<body>
+<div class="widget">
+  <div class="widget-header">
+    <h1>Shared Resource Citation Generator</h1>
+    <p>Select the Dartmouth Cancer Center Shared Resources used in your project to generate the required grant numbers and RRIDs for your manuscript, poster, or presentation.</p>
+  </div>
+  <div class="widget-body">
+    <div class="universal-note">
+      <strong>Required for all publications:</strong> Any use of Shared Resources must cite the Cancer Center Support Grant <strong>P30CA023108</strong>. This will be included automatically.
+    </div>
+    <div id="resource-list"></div>
+    <div class="output-section">
+      <h2>&#x1F4CB; Your Required Citations</h2>
+      <div id="output">
+        <div class="output-empty">Select one or more resources above to generate your citation list.</div>
+      </div>
+      <div class="btn-row">
+        <button class="copy-btn" id="copy-btn" onclick="copyCitations()" disabled>
+          &#x1F4CB; Copy to Clipboard
+        </button>
+        <button class="claude-btn" id="claude-btn" onclick="openInClaude()" disabled>
+          &#x2728; Draft Acknowledgement in Claude
+        </button>
+        <button class="reset-btn" onclick="resetAll()">
+          &#x21BA; Reset
+        </button>
+      </div>
+      <div id="author-note" style="display:none;" class="author-note">
+        <strong>&#x26A0;&#xFE0F; Authorship Note — Biostatistics &amp; Biomedical Informatics</strong>
+        BBI faculty are intellectual contributors to projects and should be included as authors on manuscripts, posters, and other presentations as appropriate.
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const UNIVERSAL_GRANT = "P30CA023108";
+const resources = [
+  {
+    category: "Biostatistics &amp; Biomedical Informatics",
+    categoryPlain: "Biostatistics & Biomedical Informatics",
+    director: "Tor Tosteson, ScD, Director",
+    authorNote: true,
+    items: [
+      {
+        id: "bbi",
+        name: "Biostatistics &amp; Biomedical Informatics",
+        grants: [],
+        rrids: ["SCR_023683"],
+        grantDisplay: "RRID:SCR_023683"
+      }
+    ]
+  },
+  {
+    category: "Clinical Pharmacology",
+    categoryPlain: "Clinical Pharmacology",
+    director: "Lionel Lewis, MB, BCh, MD, Director",
+    items: [
+      {
+        id: "cp",
+        name: "Clinical Pharmacology",
+        grants: [],
+        rrids: ["SCR_000873"],
+        grantDisplay: "RRID:SCR_000873"
+      }
+    ]
+  },
+  {
+    category: "Genomics and Molecular Biology",
+    categoryPlain: "Genomics and Molecular Biology",
+    director: "Fred Kolling, PhD, Director",
+    items: [
+      {
+        id: "genomics",
+        name: "Genomics (all projects)",
+        grants: ["S10OD030242"],
+        rrids: ["SCR_021293"],
+        grantDisplay: "S10OD030242 · RRID:SCR_021293"
+      },
+      {
+        id: "10x",
+        name: "10x Chromium — single cell &amp; spatial genomics",
+        grants: ["S10OD030242", "P20GM130454", "S10OD025235"],
+        rrids: ["SCR_021293"],
+        grantDisplay: "+ P20GM130454 · S10OD025235",
+        parentId: "genomics",
+        note: "Also requires the general Genomics citations above (S10OD030242 · RRID:SCR_021293)."
+      }
+    ]
+  },
+  {
+    category: "Immune Monitoring and Flow Cytometry",
+    categoryPlain: "Immune Monitoring and Flow Cytometry",
+    director: "Dan Mielcarz, PhD, Director",
+    items: [
+      {
+        id: "flow",
+        name: "Immune Monitoring / Flow Cytometry (general)",
+        grants: [],
+        rrids: ["SCR_019165"],
+        grantDisplay: "RRID:SCR_019165"
+      },
+      {
+        id: "northernlight",
+        name: "Northern Light Cytometer",
+        grants: ["P20GM103506"],
+        rrids: ["SCR_019165"],
+        grantDisplay: "+ P20GM103506",
+        parentId: "flow"
+      }
+    ]
+  },
+  {
+    category: "Irradiation, Imaging, Microscopy &amp; Animal Cancer Models",
+    categoryPlain: "Irradiation, Imaging, Microscopy & Animal Cancer Models",
+    director: "Radu V. Stan, MD, PhD, Director",
+    items: [
+      {
+        id: "irradimaging",
+        name: "Irradiation and Imaging",
+        grants: [],
+        rrids: [],
+        grantDisplay: "P30CA023108 only — no resource-specific RRID"
+      },
+      {
+        id: "uct",
+        name: "&#x00B5;CT",
+        grants: ["P20GM103506"],
+        rrids: [],
+        grantDisplay: "+ P20GM103506",
+        parentId: "irradimaging",
+        note: "Part of Irradiation and Imaging — selecting &#x00B5;CT also selects Irradiation and Imaging above."
+      },
+      {
+        id: "microscopy",
+        name: "Microscopy",
+        grants: [],
+        rrids: ["SCR_023478"],
+        grantDisplay: "RRID:SCR_023478"
+      },
+      {
+        id: "acm",
+        name: "Animal Cancer Models",
+        grants: [],
+        rrids: ["SCR_021284"],
+        grantDisplay: "RRID:SCR_021284"
+      }
+    ]
+  },
+  {
+    category: "Pathology Shared Resource",
+    categoryPlain: "Pathology Shared Resource",
+    director: "Gregory J. Tsongalis, PhD, HCLD, Director",
+    items: [
+      {
+        id: "path",
+        name: "Pathology Shared Resource",
+        grants: [],
+        rrids: ["SCR_023479"],
+        grantDisplay: "RRID:SCR_023479"
+      }
+    ]
+  },
+  {
+    category: "Biological Mass Spec and Proteomics",
+    categoryPlain: "Biological Mass Spec and Proteomics",
+    director: "Anna M. Schmoker, PhD, Director",
+    items: [
+      {
+        id: "bmsp",
+        name: "Biological Mass Spec and Proteomics (BMSP)",
+        grants: [],
+        rrids: ["SCR_026076"],
+        grantDisplay: "RRID:SCR_026076"
+      }
+    ]
+  },
+  {
+    category: "Trace Elements",
+    categoryPlain: "Trace Elements",
+    director: "Brian Jackson, PhD, Director",
+    items: [
+      {
+        id: "tea",
+        name: "Trace Elements Analysis (TEA)",
+        grants: [],
+        rrids: ["SCR_009777"],
+        grantDisplay: "RRID:SCR_009777"
+      },
+      {
+        id: "bneir",
+        name: "Biomedical National Elemental Imaging Resource (BNEIR)",
+        grants: ["R24GM141194", "S10OD032352"],
+        rrids: ["SCR_009777"],
+        grantDisplay: "+ R24GM141194 · S10OD032352",
+        parentId: "tea",
+        note: "BNEIR is part of the Trace Elements shared resource and additionally requires a NIGMS grant and NIH Shared Instrumentation Grant."
+      }
+    ]
+  }
+];
+// Render resource list
+const listEl = document.getElementById('resource-list');
+resources.forEach(cat => {
+  const catId = cat.category.replace(/[^a-zA-Z0-9]/g, '-');
+  const catDiv = document.createElement('div');
+  catDiv.className = 'category';
+  catDiv.innerHTML = `
+    <div class="category-header" onclick="toggleCategory('${catId}')">
+      <div class="category-header-text">
+        <h3>${cat.category}</h3>
+        <div class="director">${cat.director}</div>
+      </div>
+      <span class="chevron open" id="chevron-${catId}">&#9660;</span>
+    </div>
+    <div class="category-items" id="cat-${catId}"></div>
+  `;
+  listEl.appendChild(catDiv);
+  const itemsDiv = catDiv.querySelector(`#cat-${catId}`);
+  cat.items.forEach(item => {
+    const wrapper = document.createElement('div');
+    const childClass = item.parentId ? ' child-item' : '';
+    wrapper.innerHTML = `
+      <label class="item${childClass}" for="${item.id}">
+        <input type="checkbox" id="${item.id}" data-parent="${item.parentId || ''}" onchange="onItemToggle(this)">
+        <div class="item-label">
+          <div class="item-name">${item.name}</div>
+          <div class="item-grants">${item.grantDisplay}</div>
+        </div>
+      </label>
+      ${item.note ? `<div class="item-note">&#x2139;&#xFE0F; ${item.note}</div>` : ''}
+    `;
+    itemsDiv.appendChild(wrapper);
+  });
+});
+function toggleCategory(catId) {
+  const items = document.getElementById('cat-' + catId);
+  const chevron = document.getElementById('chevron-' + catId);
+  if (items.style.display === 'none') {
+    items.style.display = '';
+    chevron.classList.add('open');
+  } else {
+    items.style.display = 'none';
+    chevron.classList.remove('open');
+  }
+  notifyParentHeight();
+}
+// When an instrument-specific item is checked, also check its parent resource
+// so the parent's required citations are included automatically. One-way:
+// unchecking a child never unchecks the parent (the parent may stand on its own).
+function onItemToggle(cb) {
+  if (cb.checked && cb.dataset.parent) {
+    const parent = document.getElementById(cb.dataset.parent);
+    if (parent && !parent.checked) parent.checked = true;
+  }
+  updateOutput();
+}
+// Decode HTML entities to plain text using a temporary element
+function decodeName(html) {
+  const el = document.createElement('span');
+  el.innerHTML = html;
+  return el.textContent || el.innerText || html;
+}
+// Collect all selected data in one pass — used by updateOutput, copyCitations, openInClaude
+function collectSelected() {
+  const allGrants = new Set([UNIVERSAL_GRANT]);
+  const allRRIDs = new Set();
+  const selectedResources = [];
+  let showAuthorNote = false;
+  resources.forEach(cat => {
+    cat.items.forEach(item => {
+      const cb = document.getElementById(item.id);
+      if (cb && cb.checked) {
+        item.grants.forEach(g => allGrants.add(g));
+        item.rrids.forEach(r => allRRIDs.add(r));
+        if (cat.authorNote) showAuthorNote = true;
+        selectedResources.push({
+          category: cat.categoryPlain,
+          name: decodeName(item.name),
+          grants: item.grants,
+          rrids: item.rrids
+        });
+      }
+    });
+  });
+  return { allGrants, allRRIDs, selectedResources, showAuthorNote };
+}
+function updateOutput() {
+  const output = document.getElementById('output');
+  const copyBtn = document.getElementById('copy-btn');
+  const claudeBtn = document.getElementById('claude-btn');
+  const authorNoteDiv = document.getElementById('author-note');
+  const { allGrants, allRRIDs, selectedResources, showAuthorNote } = collectSelected();
+  const anySelected = selectedResources.length > 0;
+  authorNoteDiv.style.display = showAuthorNote ? 'block' : 'none';
+  if (!anySelected) {
+    output.innerHTML = '<div class="output-empty">Select one or more resources above to generate your citation list.</div>';
+    copyBtn.disabled = true;
+    claudeBtn.disabled = true;
+    notifyParentHeight();
+    return;
+  }
+  copyBtn.disabled = false;
+  claudeBtn.disabled = false;
+  const ul = document.createElement('ul');
+  ul.className = 'citation-list';
+  allGrants.forEach(grant => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="citation-badge badge-grant">Grant</span><span class="citation-value">${grant}</span>`;
+    ul.appendChild(li);
+  });
+  allRRIDs.forEach(rrid => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="citation-badge badge-rrid">RRID</span><span class="citation-value">RRID:${rrid}</span>`;
+    ul.appendChild(li);
+  });
+  output.innerHTML = '';
+  output.appendChild(ul);
+  notifyParentHeight();
+}
+function copyCitations() {
+  const { allGrants, allRRIDs, selectedResources } = collectSelected();
+  const resourceLines = selectedResources.map(r => {
+    const citations = [
+      ...r.grants,
+      ...r.rrids.map(rr => 'RRID:' + rr)
+    ];
+    return `  - ${r.category} — ${r.name}${citations.length ? ': ' + citations.join(', ') : ''}`;
+  });
+  const lines = [
+    'Required Shared Resource Citations',
+    '===================================',
+    '',
+    'Resources Used:',
+    ...resourceLines,
+    '',
+    'Grant Numbers:',
+    ...[...allGrants].map(g => '  ' + g),
+    '',
+    'RRIDs:',
+    ...[...allRRIDs].map(r => '  RRID:' + r)
+  ];
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.innerHTML = '&#x2705; Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.innerHTML = '&#x1F4CB; Copy to Clipboard';
+      btn.classList.remove('copied');
+    }, 2500);
+  });
+}
+function openInClaude() {
+  const { allGrants, allRRIDs, selectedResources } = collectSelected();
+  // Build one line per selected resource showing its name and unique citations
+  const resourceLines = selectedResources.map(r => {
+    const citations = [
+      ...r.grants,
+      ...r.rrids.map(rr => 'RRID:' + rr)
+    ];
+    return `  - ${r.category} — ${r.name}${citations.length ? ': ' + citations.join(', ') : ''}`;
+  }).join('\n');
+  const grantList = [...allGrants].join(', ');
+  const rridList = [...allRRIDs].map(r => 'RRID:' + r).join(', ');
+  const prompt =
+`Please write a formal acknowledgement paragraph for a scientific manuscript. The following Dartmouth Cancer Center Shared Resources at Dartmouth College were used in this study:
+${resourceLines}
+All use of Shared Resources also requires acknowledgement of the NCI Cancer Center Support Grant.
+The complete set of required citations is:
+  Grant numbers: ${grantList}${rridList ? '\n  RRIDs: ' + rridList : ''}
+Please write a single, concise acknowledgement paragraph that mentions each shared resource by name and includes all required grant numbers and RRIDs in the standard format used in biomedical journal manuscripts.`;
+  window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
+}
+function resetAll() {
+  resources.forEach(cat => {
+    cat.items.forEach(item => {
+      const cb = document.getElementById(item.id);
+      if (cb) cb.checked = false;
+    });
+  });
+  updateOutput();
+}
+
+// ── Iframe height communication: when embedded on omics.dartmouth.edu, ──
+// ── post the current document height to the parent so the wrapper can ──
+// ── size the iframe to its content (matches the gsr-estimator pattern). ──
+function notifyParentHeight() {
+  if (window.parent === window) return; // not iframed
+  const h = Math.max(
+    document.documentElement.scrollHeight,
+    document.body.scrollHeight
+  );
+  window.parent.postMessage({ type: 'citation-generator:height', height: h }, '*');
+}
+// Re-notify on any DOM size change (covers font loading, image loads, etc.)
+if (window.parent !== window && typeof ResizeObserver !== 'undefined') {
+  new ResizeObserver(() => notifyParentHeight()).observe(document.body);
+}
+window.addEventListener('load', notifyParentHeight);
+
+updateOutput();
+</script>
+</body>
+</html>
