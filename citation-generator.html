@@ -561,9 +561,9 @@ resources.forEach(cat => {
         <h3>${cat.category}</h3>
         <div class="director">${cat.director}</div>
       </div>
-      <span class="chevron open" id="chevron-${catId}">&#9660;</span>
+      <span class="chevron" id="chevron-${catId}">&#9660;</span>
     </div>
-    <div class="category-items" id="cat-${catId}"></div>
+    <div class="category-items" id="cat-${catId}" style="display:none;"></div>
   `;
   listEl.appendChild(catDiv);
   const itemsDiv = catDiv.querySelector(`#cat-${catId}`);
