@@ -162,7 +162,7 @@
   .item {
     display: flex;
     align-items: flex-start;
-    padding: 9px 16px;
+    padding: 9px 16px 9px 28px;
     cursor: pointer;
     transition: background 0.15s;
   }
@@ -170,7 +170,7 @@
     background: #f8f8f8;
   }
   .item.child-item {
-    padding-left: 44px;
+    padding-left: 56px;
   }
   .item input[type="checkbox"] {
     margin-right: 12px;
@@ -196,16 +196,6 @@
     color: #777;
     margin-top: 3px;
     font-family: 'Courier New', monospace;
-  }
-  .item-note {
-    font-size: 0.8rem;
-    color: #7a5c00;
-    background: #fffbea;
-    border-radius: 4px;
-    padding: 6px 10px;
-    margin: 2px 16px 8px 43px;
-    border: 1px solid #f0e08a;
-    line-height: 1.4;
   }
   /* Output section */
   .output-section {
@@ -446,8 +436,7 @@ const resources = [
         grants: ["S10OD030242", "P20GM130454", "S10OD025235"],
         rrids: ["SCR_021293"],
         grantDisplay: "+ P20GM130454 · S10OD025235",
-        parentId: "genomics",
-        note: "Also requires the general Genomics citations above (S10OD030242 · RRID:SCR_021293)."
+        parentId: "genomics"
       }
     ]
   },
@@ -491,8 +480,7 @@ const resources = [
         grants: ["P20GM103506"],
         rrids: [],
         grantDisplay: "+ P20GM103506",
-        parentId: "irradimaging",
-        note: "Part of Irradiation and Imaging — selecting &#x00B5;CT also selects Irradiation and Imaging above."
+        parentId: "irradimaging"
       },
       {
         id: "microscopy",
@@ -556,8 +544,7 @@ const resources = [
         grants: ["R24GM141194", "S10OD032352"],
         rrids: ["SCR_009777"],
         grantDisplay: "+ R24GM141194 · S10OD032352",
-        parentId: "tea",
-        note: "BNEIR is part of the Trace Elements shared resource and additionally requires a NIGMS grant and NIH Shared Instrumentation Grant."
+        parentId: "tea"
       }
     ]
   }
@@ -591,7 +578,6 @@ resources.forEach(cat => {
           <div class="item-grants">${item.grantDisplay}</div>
         </div>
       </label>
-      ${item.note ? `<div class="item-note">&#x2139;&#xFE0F; ${item.note}</div>` : ''}
     `;
     itemsDiv.appendChild(wrapper);
   });
