@@ -259,6 +259,11 @@
     color: #2c5aa0;
     border: 1px solid #b8ccec;
   }
+  .badge-core {
+    background: #f3f3f3;
+    color: #444;
+    border: 1px solid #d6d6d6;
+  }
   .citation-value {
     font-family: 'Courier New', monospace;
     font-size: 0.9rem;
@@ -360,7 +365,7 @@
   </div>
   <div class="widget-body">
     <div class="universal-note">
-      <strong>Required for all publications:</strong> Any use of Shared Resources must cite the Cancer Center Support Grant <strong>P30CA023108</strong>. This will be included automatically.
+      <strong>How to acknowledge Shared Resources:</strong> In your manuscript's Acknowledgements section, name each Shared Resource you used and include its RRID. The Cancer Center Support Grant (P30CA023108) no longer needs to be cited. Some resources also require instrument- or service-specific grants, which are listed below.
     </div>
     <div id="resource-list"></div>
     <div class="output-section">
@@ -387,7 +392,6 @@
   </div>
 </div>
 <script>
-const UNIVERSAL_GRANT = "P30CA023108";
 const resources = [
   {
     category: "Biostatistics &amp; Biomedical Informatics",
@@ -566,7 +570,7 @@ const resources = [
         name: "Dartmouth Cancer Center Shared Instruments",
         grants: [],
         rrids: [],
-        grantDisplay: "P30CA023108 only"
+        grantDisplay: "Acknowledge by name (no RRID)"
       }
     ]
   }
@@ -634,7 +638,8 @@ function decodeName(html) {
 }
 // Collect all selected data in one pass — used by updateOutput, copyCitations, openInClaude
 function collectSelected() {
-  const allGrants = new Set([UNIVERSAL_GRANT]);
+  const allGrants = new Set();
+  const allCores = new Set();
   const allRRIDs = new Set();
   const selectedResources = [];
   let showAuthorNote = false;
@@ -644,6 +649,7 @@ function collectSelected() {
       if (cb && cb.checked) {
         item.grants.forEach(g => allGrants.add(g));
         item.rrids.forEach(r => allRRIDs.add(r));
+        allCores.add(cat.categoryPlain);
         if (cat.authorNote) showAuthorNote = true;
         selectedResources.push({
           category: cat.categoryPlain,
@@ -654,14 +660,14 @@ function collectSelected() {
       }
     });
   });
-  return { allGrants, allRRIDs, selectedResources, showAuthorNote };
+  return { allGrants, allRRIDs, allCores, selectedResources, showAuthorNote };
 }
 function updateOutput() {
   const output = document.getElementById('output');
   const copyBtn = document.getElementById('copy-btn');
   const claudeBtn = document.getElementById('claude-btn');
   const authorNoteDiv = document.getElementById('author-note');
-  const { allGrants, allRRIDs, selectedResources, showAuthorNote } = collectSelected();
+  const { allGrants, allRRIDs, allCores, selectedResources, showAuthorNote } = collectSelected();
   const anySelected = selectedResources.length > 0;
   authorNoteDiv.style.display = showAuthorNote ? 'block' : 'none';
   if (!anySelected) {
@@ -675,6 +681,11 @@ function updateOutput() {
   claudeBtn.disabled = false;
   const ul = document.createElement('ul');
   ul.className = 'citation-list';
+  allCores.forEach(core => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="citation-badge badge-core">Resource</span><span class="citation-value">${core}</span>`;
+    ul.appendChild(li);
+  });
   allGrants.forEach(grant => {
     const li = document.createElement('li');
     li.innerHTML = `<span class="citation-badge badge-grant">Grant</span><span class="citation-value">${grant}</span>`;
@@ -699,18 +710,16 @@ function copyCitations() {
     return `  - ${r.category} — ${r.name}${citations.length ? ': ' + citations.join(', ') : ''}`;
   });
   const lines = [
-    'Required Shared Resource Citations',
-    '===================================',
+    'Required Shared Resource Acknowledgements',
+    '==========================================',
+    '',
+    'Acknowledge each Shared Resource by name and RRID in the Acknowledgements section.',
     '',
     'Resources Used:',
-    ...resourceLines,
-    '',
-    'Grant Numbers:',
-    ...[...allGrants].map(g => '  ' + g),
-    '',
-    'RRIDs:',
-    ...[...allRRIDs].map(r => '  RRID:' + r)
+    ...resourceLines
   ];
+  if (allRRIDs.size) lines.push('', 'RRIDs:', ...[...allRRIDs].map(r => '  RRID:' + r));
+  if (allGrants.size) lines.push('', 'Grant Numbers:', ...[...allGrants].map(g => '  ' + g));
   navigator.clipboard.writeText(lines.join('\n')).then(() => {
     const btn = document.getElementById('copy-btn');
     btn.innerHTML = '&#x2705; Copied!';
@@ -733,13 +742,15 @@ function openInClaude() {
   }).join('\n');
   const grantList = [...allGrants].join(', ');
   const rridList = [...allRRIDs].map(r => 'RRID:' + r).join(', ');
+  const citationLines = [
+    rridList ? '  RRIDs: ' + rridList : '',
+    grantList ? '  Grant numbers: ' + grantList : ''
+  ].filter(Boolean).join('\n');
   const prompt =
 `Please write a formal acknowledgement paragraph for a scientific manuscript. The following Dartmouth Cancer Center Shared Resources at Dartmouth College were used in this study:
 ${resourceLines}
-All use of Shared Resources also requires acknowledgement of the NCI Cancer Center Support Grant.
-The complete set of required citations is:
-  Grant numbers: ${grantList}${rridList ? '\n  RRIDs: ' + rridList : ''}
-Please write a single, concise acknowledgement paragraph that mentions each shared resource by name and includes all required grant numbers and RRIDs in the standard format used in biomedical journal manuscripts.`;
+Each Shared Resource should be acknowledged by name together with its RRID. Do not cite the NCI Cancer Center Support Grant (P30CA023108).${citationLines ? '\nThe complete set of required citations is:\n' + citationLines : ''}
+Please write a single, concise acknowledgement paragraph that mentions each shared resource by name and includes its RRID${grantList ? ' and all listed grant numbers' : ''} in the standard format used in biomedical journal manuscripts.`;
   window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
 }
 function resetAll() {

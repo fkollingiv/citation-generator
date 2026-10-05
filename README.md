@@ -5,7 +5,7 @@ An interactive web tool that helps Dartmouth researchers generate the correct **
 ## Features
 
 - **One-click selection** of any combination of the eleven Dartmouth Cancer Center Shared Resources, grouped by core
-- **Automatic inclusion** of the NCI Cancer Center Support Grant (`P30CA023108`) on every citation list
+- **Name + RRID acknowledgement** — each selected Shared Resource is listed by name with its RRID for the manuscript's Acknowledgements section. The NCI Cancer Center Support Grant (`P30CA023108`) is no longer cited.
 - **Conditional grants** — instrument- or service-specific awards (e.g. `S10OD030242`, `P20GM130454`, `R24GM141194`) are added only when their associated resource is selected
 - **RRIDs included** for every shared resource so manuscripts comply with NIH Rigor & Reproducibility guidance
 - **Authorship note** automatically surfaces when Biostatistics & Biomedical Informatics is selected, reminding users that BBI faculty should be included as authors
@@ -38,8 +38,6 @@ Grant numbers, RRIDs, directors, and the resource list are stored in the JavaScr
 1. Edit the relevant object in the `resources` array (or append a new one)
 2. Commit and push to `main`
 3. GitHub Pages republishes automatically and every embedding page picks up the change on next load
-
-The universal Cancer Center Support Grant is stored in the `UNIVERSAL_GRANT` constant directly above the `resources` array.
 
 ## Tech Stack
 
